@@ -16,8 +16,8 @@ def create_table_train(curr, conn):
 
 def create_table_station(curr, conn):
     curr.execute("""CREATE TABLE station (
-                        code INT PRIMARY KEY,
-                        name VARCHAR(20))""")
+                        code SERIAL PRIMARY KEY,
+                        name VARCHAR(20) UNIQUE)""")
     conn.commit()
 
 
@@ -39,7 +39,7 @@ def create_table_carriage(curr, conn):
 
 def create_table_type(curr, conn):
     curr.execute("""CREATE TABLE type(
-                                id INT PRIMARY KEY UNIQUE,
+                                id SERIAL PRIMARY KEY,
                                 name VARCHAR(12))""")
     conn.commit()
 
@@ -80,25 +80,22 @@ def insert_into_train(curr, conn, obj):
 
 
 def insert_into_station(curr, conn, obj):
-    curr.execute(f"""INSERT INTO station (code,name)
-                     VALUES ({obj["code"]},
-                            '{obj["name"]}')""")
+    curr.execute(f"""INSERT INTO station (name)
+                     VALUES ('{obj["name"]}')""")
     conn.commit()
 
 
 def insert_into_carriage(curr, conn, obj):
     curr.execute(f"""INSERT INTO carriage (carriage_number,train_number,type_id,seat_count)
                      VALUES ({obj["carriage_number"]},
-                             {obj["train_number"]}
+                             {obj["train_number"]},
                              {obj["type_id"]},
                              {obj["seat_count"]})""")
     conn.commit()
 
 
 def insert_into_type(curr, conn, obj):
-    curr.execute(f"""INSERT INTO type(id,name)
-                         VALUES ({obj["id"]},
-                                '{obj["name"]}')""")
+    curr.execute(f"""INSERT INTO type(name) VALUES ('{obj["name"]}')""")
     conn.commit()
 
 
@@ -114,7 +111,7 @@ def insert_into_ticket(curr, conn, obj):
 
 def insert_into_seat(curr, conn, obj):
     curr.execute(f"""INSERT INTO seat (carriage_id,seat_number,location)
-                     VALUES ({obj["carriage_number"]},
+                     VALUES ({obj["carriage_id"]},
                              {obj["seat_number"]},
                             '{obj["location"]}')""")
     conn.commit()
@@ -266,6 +263,35 @@ def get_ticket(curr):
 def get_seat(curr):
     curr.execute(f"""SELECT * FROM seat""")
     return curr.fetchone()
+
+
+def full_text_ticket_search(cur, word):
+        cur.execute(f"""SELECT * FROM ticket
+                             WHERE to_tsvector(name) || to_tsvector(surname) @@ plainto_tsquery('{word}')""")
+        return cur.fetchall()
+
+
+def full_text_seat_search(cur, word):
+    cur.execute(f"""SELECT * FROM seat
+                             WHERE location NOT IN (
+                                SELECT location FROM seat
+                                WHERE to_tsvector(location) @@ plainto_tsquery('{word}')
+                             )""")
+    return cur.fetchall()
+
+
+def search_in_interval_train_carriage(cur, interval):
+    cur.execute(f"""SELECT train.train_number, carriage_id from train 
+                    INNER JOIN carriage ON train.train_number = carriage.train_number
+                    WHERE (train.train_number BETWEEN {interval["train_down"]} AND {interval["train_up"]} )
+                          OR
+                          (carriage.carriage_number BETWEEN {interval["carriage_down"]} AND {interval["carriage_up"]})""")
+    return cur.fetchall()
+
+
+def search_in_enum(curr, enum):
+    curr.execute(f"""SELECT id from type WHERE name in ('{enum[0]}','{enum[1]}','{enum[2]}','{enum[3]}')""")
+    return curr.fetchall()
 
 
 def drop_all_tables(curr, conn):

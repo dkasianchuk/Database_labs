@@ -3,8 +3,6 @@ from psycopg2.extras import DictCursor
 from contextlib import closing
 import database
 import view
-import string
-import random
 
 
 def run(db_name, user='postgres', password='135798642', host='127.0.0.1', port=5433):
@@ -37,8 +35,16 @@ def menu(cur, conn):
         elif ch == 4:
             select_menu(cur)
         elif ch == 5:
-            pass
+            random_database(cur, conn, 20)
         elif ch == 6:
+            show_record_with_word(cur, input("Word: "))
+        elif ch == 7:
+            show_record_without_word(cur, input("Word: "))
+        elif ch == 8:
+            show_records_in_interval(cur, view.get_obj_for_search_in_interval())
+        elif ch == 9:
+            show_records_in_enum(cur, view.get_enum())
+        elif ch == 10:
             return
         else:
             print("Bad choice, try again...")
@@ -99,11 +105,11 @@ def update_menu(cur, conn):
         elif ch == 3:
             database.update_seat_by_id(cur, conn, view.get_update_obj_for_seat())
         elif ch == 4:
-            database.update_station_by_code(cur, conn, view.get_obj_for_station())
+            database.update_station_by_code(cur, conn, view.get_update_obj_for_station())
         elif ch == 5:
             database.update_ticket_by_id(cur, conn, view.get_update_obj_for_ticket())
         elif ch == 6:
-            database.update_type_by_id(cur, conn, view.get_obj_for_type())
+            database.update_type_by_id(cur, conn, view.get_update_obj_for_type())
         elif ch == 7:
             return
         else:
@@ -132,9 +138,59 @@ def select_menu(cur):
             print("Bad choice, try again...")
 
 
-def __generate_random_string(min_border, max_border):
-    s = string.ascii_letters
-    return ''.join(random.sample(s, random.randint(min_border, max_border)))
+def random_database(curr, conn, count):
+    codes = []
+    types = []
+    trains = []
+    carriages = []
+    seats = []
+    for code in range(1, count+1):
+        database.insert_into_station(curr, conn, view.generate_random_name())
+        codes.append(code)
+
+    for type_id in range(1, int(count/4)):
+        database.insert_into_type(curr, conn, view.generate_random_name())
+        types.append(type_id)
+
+    for train_number in range(1, count+1):
+        database.insert_into_train(curr, conn, view.generate_random_train(codes))
+        trains.append(train_number)
+
+    for carriage_id in range(1, count+1):
+        carriage = view.generate_random_carriage(trains, types)
+        database.insert_into_carriage(curr, conn, carriage)
+        carriages.append({"id": carriage_id, "seat_count": carriage["seat_count"]})
+
+    for uid in range(1, count+1):
+        database.insert_into_seat(curr, conn, view.generate_random_seat(carriages))
+        seats.append(uid)
+
+    for ticket_id in range(1, count+1):
+        database.insert_into_ticket(curr, conn, view.generate_random_ticket(seats))
+
+
+def show_record_with_word(cur, word):
+    response = database.full_text_ticket_search(cur, word)
+    view.print_response(response)
+    return response
+
+
+def show_record_without_word(cur, word):
+    response = database.full_text_seat_search(cur, word)
+    view.print_response(response)
+    return response
+
+
+def show_records_in_interval(cur, obj):
+    response = database.search_in_interval_train_carriage(cur, obj)
+    view.print_response(response)
+    return response
+
+
+def show_records_in_enum(cur, enum):
+    response = database.search_in_enum(cur, enum)
+    view.print_response(response)
+    return response
 
 
 if __name__ == "__main__":

@@ -1,10 +1,18 @@
+import random
+import string
+
+
 def show_main_menu_buttons():
     print("1.Add new record.")
     print("2.Update an existing record.")
     print("3.Delete record.")
     print("4.Show record.")
     print("5.Random database.")
-    print("6.Exit.")
+    print("6.Show record from 'ticket' the word is in it..")
+    print("7.Show record the word is not in it.")
+    print("8.Search train and carriage in interval.")
+    print("9.Search word in enum.")
+    print("10.Exit.")
 
 
 def show_input_buttons():
@@ -75,8 +83,14 @@ def get_update_obj_for_train():
 
 def get_obj_for_station():
     return {
-        "code": input("Station code: "),
         "name": input("Station name: ")
+    }
+
+
+def get_update_obj_for_station():
+    return {
+        "code": input("Input code: "),
+        "name": input("Input new name: ")
     }
 
 
@@ -90,6 +104,12 @@ def get_obj_for_carriage():
 
 
 def get_obj_for_type():
+    return {
+        "name": input("Input string designator for the id: ")
+    }
+
+
+def get_update_obj_for_type():
     return {
         "id": get_correct_number("Input id: "),
         "name": input("Input string designator for the id: ")
@@ -119,7 +139,6 @@ def get_update_obj_for_ticket():
 
 def get_obj_for_seat():
     return {
-        "train_number": get_correct_number("Train number: "),
         "carriage_id": get_correct_number("Carriage id: "),
         "seat_number": get_correct_number("Seat number: "),
         "location": input("Location: ")
@@ -128,11 +147,89 @@ def get_obj_for_seat():
 
 def get_update_obj_for_seat():
     return {
-        "uid": get_correct_number("UID:" ),
+        "uid": get_correct_number("UID: "),
         "train_number": get_correct_number("Train number: "),
         "carriage_id": get_correct_number("Carriage id: "),
         "seat_number": get_correct_number("Seat number: "),
         "location": input("Location: ")
+    }
+
+
+def get_obj_for_search_in_interval():
+    return {
+        "train_down": get_correct_number("Input down border for train: "),
+        "train_up": get_correct_number("Input up border for train: "),
+        "carriage_down": get_correct_number("Input down border for carriage: "),
+        "carriage_up": get_correct_number("Input up border for carriage: ")}
+
+
+def get_enum():
+    enum = []
+    for i in range(4):
+        enum.append(input("Word " + str(i) + ":"))
+    return enum
+
+
+def generate_random_string(min_border, max_border):
+    s = string.ascii_letters
+    return ''.join(random.sample(s, random.randint(min_border, max_border)))
+
+
+def generate_random_time():
+    return str(random.randint(0, 23)) + ":" + str(random.randint(0, 59)) + ":" + str(random.randint(0, 59))
+
+
+def generate_random_name():
+    return {
+        "name": generate_random_string(5, 12)
+    }
+
+
+def generate_random_train(codes):
+    ind1 = random.randint(0, len(codes) - 1)
+    while True:
+        ind2 = random.randint(0, len(codes) - 1)
+        if ind1 != ind2:
+            break
+    return {
+        "departure_station": codes[ind1],
+        "arrival_station": codes[ind2],
+        "departure_time": generate_random_time(),
+        "arrival_time": generate_random_time()
+    }
+
+
+def generate_random_carriage(trains, types):
+    return {
+        "train_number": trains[random.randint(0, len(trains) - 1)],
+        "carriage_number": random.randint(1, 18),
+        "type_id": types[random.randint(0, len(types) - 1)],
+        "seat_count": random.randint(1, 54)
+    }
+
+
+def generate_random_seat(carriages):
+    ind = random.randint(0, len(carriages) - 1)
+    return {
+        "carriage_id": carriages[ind]["id"],
+        "seat_number": random.randint(1, carriages[ind]["seat_count"]),
+        "location": generate_random_string(5, 10)
+    }
+
+
+def generate_random_date():
+    days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    month = random.randint(1, 12)
+    return "2019-" + str(month) + "-" + str(random.randint(1, days[month-1]))
+
+
+def generate_random_ticket(seats):
+    return {
+        "uid": seats[random.randint(0, len(seats) - 1)],
+        "departure_date": generate_random_date(),
+        "price": random.randint(20, 1000),
+        "name": generate_random_string(6, 12),
+        "surname": generate_random_string(6, 12)
     }
 
 
