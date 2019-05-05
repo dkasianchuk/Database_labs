@@ -128,7 +128,7 @@ def delete_station(curr, conn, code):
 
 
 def delete_carriage(curr, conn, carriage_id):
-    curr.execute(f"""DELETE FROM carriage WHERE carriage_number = {carriage_id}""")
+    curr.execute(f"""DELETE FROM carriage WHERE carriage_id = {carriage_id}""")
     conn.commit()
 
 
@@ -169,7 +169,7 @@ def update_carriage_by_number(curr, conn, data):
     curr.execute(f"""UPDATE carriage 
                      SET (train_number,carriage_number,type_id,seat_count) = 
                      ({data["train_number"]},
-                      {data["carriage_number"]}
+                      {data["carriage_number"]},
                       {data["type_id"]},
                       {data["seat_count"]})
                      WHERE carriage_id = {data["carriage_id"]}""")
@@ -197,7 +197,7 @@ def update_type_by_id(curr, conn, data):
 
 def update_seat_by_id(curr, conn, data):
     curr.execute(f"""UPDATE seat 
-                     SET (carriage_id,seat_number,location) = 
+                     SET (carriage_number,seat_number,location) = 
                      ({data["carriage_number"]},
                       {data["seat_number"]},
                      '{data["location"]}')
