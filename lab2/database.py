@@ -219,7 +219,7 @@ def delete_type(session, type_id):
 
 
 def delete_seat(session, uid):
-    session.query(Seat).filter_by(uid=uid)
+    session.query(Seat).filter_by(uid=uid).delete()
     session.commit()
 
 
