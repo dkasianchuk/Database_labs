@@ -8,8 +8,12 @@ def run(db_name, user='postgres', password='135798642', host='127.0.0.1', port=5
     url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{db_name}"
     engine = create_engine(url)
     session = Session(bind=engine)
-    database.drop_all_tables(engine)
+    database.drop_all(engine)
     database.create_all_tables(engine)
+    database.create_procedure_add_seat(engine)
+    database.create_trigger_add_seat(engine)
+    database.create_procedure_add_carriage(engine)
+    database.create_trigger_add_carriage(engine)
     menu(session)
 
 
@@ -28,14 +32,10 @@ def menu(session):
         elif ch == 5:
             random_database(session, 20)
         elif ch == 6:
-            show_record_with_word(session, input("Word: "))
-        elif ch == 7:
-            show_record_without_word(session, input("Word: "))
-        elif ch == 8:
             show_records_in_interval(session, view.get_obj_for_search_in_interval())
-        elif ch == 9:
+        elif ch == 7:
             show_records_in_enum(session, view.get_enum())
-        elif ch == 10:
+        elif ch == 8:
             return
         else:
             print("Bad choice, try again...")
@@ -158,18 +158,6 @@ def random_database(session, count):
 
     for ticket_id in range(1, count+1):
         database.insert_into_ticket(session, view.generate_random_ticket(seats))
-
-
-def show_record_with_word(session, word):
-    response = database.full_text_ticket_search(session, word)
-    view.print_response(response)
-    return response
-
-
-def show_record_without_word(session, word):
-    response = database.full_text_seat_search(session, word)
-    view.print_response(response)
-    return response
 
 
 def show_records_in_interval(session, obj):

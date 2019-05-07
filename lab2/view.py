@@ -8,11 +8,9 @@ def show_main_menu_buttons():
     print("3.Delete record.")
     print("4.Show record.")
     print("5.Random database.")
-    print("6.Show record from 'ticket' the word is in it..")
-    print("7.Show record the word is not in it.")
-    print("8.Search train and carriage in interval.")
-    print("9.Search word in enum.")
-    print("10.Exit.")
+    print("6.Search train and carriage in interval.")
+    print("7.Search word in enum.")
+    print("8.Exit.")
 
 
 def show_input_buttons():

@@ -271,24 +271,67 @@ def search_in_enum(session, enum):
     return query.all()
 
 
-def drop_all_tables(engine):
+def drop_all(engine):
     Base.metadata.drop_all(engine)
 
 
 def create_all_tables(engine):
     Base.metadata.create_all(engine)
 
-# full text search
+# triggers
 
 
-def full_text_ticket_search(session, word):
-    query = session.query(Ticket).filter(or_(Ticket.to_tsvector.op('@@')(func.plainto_tsquery(word)))
-                                            (Ticket.to_tsvector.op('@@')(func.plainto_tsquery(word))))
-    return query.all()
+def create_trigger_add_seat(engine):
+    trigger_text = """
+    CREATE TRIGGER insert_correct_seat BEFORE INSERT OR UPDATE ON seat
+    FOR EACH ROW 
+    EXECUTE PROCEDURE insert_seat()
+    """
+    engine.execute(trigger_text)
 
 
-def full_text_seat_search(session, word):
-    query = session.query(Seat)\
-        .filter(Seat.location.not_in_(session.query(Seat.location)
-                                      .filter(Seat.location.tsvector_op('@@')(func.plainto_tsquery(word)))))
-    return query.fetchall()
+def create_procedure_add_seat(engine):
+    procedure_text = """
+    CREATE OR REPLACE FUNCTION insert_seat () RETURNS TRIGGER AS 
+    $$
+    BEGIN
+        IF NEW.seat_number <= (SELECT seat_count FROM carriage WHERE carriage_id = NEW.carriage_id)
+            THEN
+                RETURN NEW;
+        END IF;
+        RETURN NULL;
+    END;
+    $$
+    LANGUAGE plpgsql;
+    """
+    engine.execute(procedure_text)
+
+
+def create_trigger_add_carriage(engine):
+    trigger_text = """
+    CREATE TRIGGER insert_correct_carriage BEFORE INSERT OR UPDATE ON carriage
+    FOR EACH ROW 
+    EXECUTE PROCEDURE insert_carriage()
+    """
+    engine.execute(trigger_text)
+
+
+def create_procedure_add_carriage(engine):
+    procedure_text = """
+    CREATE OR REPLACE FUNCTION insert_carriage () RETURNS TRIGGER AS 
+    $$
+    DECLARE
+        record RECORD;
+    BEGIN
+        FOR record in SELECT * FROM carriage LOOP
+            IF record.train_number = NEW.train_number AND record.carriage_number = NEW.carriage_number
+                THEN
+                    RETURN NULL;
+            END IF;
+        END LOOP;
+        RETURN NEW;
+    END;
+    $$
+    LANGUAGE plpgsql;
+    """
+    engine.execute(procedure_text)
